@@ -17,8 +17,6 @@ import type {
   ServerToClientEvents,
   Room,
   RoomStatus,
-  Player,
-  CurrentMove,
 } from "@smartic/types";
 import { roomStatus } from "./types";
 import { activeGameloops, rooms } from "./data/store";
@@ -34,7 +32,7 @@ import {
 
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server);
 
-const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
+const PORT = process.env.PORT ? Number(process.env.PORT) : 3001;
 
 const statusToCountdown: Record<Exclude<RoomStatus, "waiting">, number> = {
   interval: 5,

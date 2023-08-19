@@ -12,10 +12,5 @@
   ],
   "compilerOptions": {
     "esModuleInterop": true,
-    "paths": {
-      "@smartic/types": [
-        "packages/types/src"
-      ]
-    }
   }
 }
