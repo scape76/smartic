@@ -449,6 +449,7 @@ server.listen(PORT, () => {
   console.log(`Server is listening on *:${PORT}`);
 });
 
-app.get("/", () => {
+app.get("/", (req, res) => {
+  res.send({ message: 'Hello API' });
   console.log("Up and running");
 });
