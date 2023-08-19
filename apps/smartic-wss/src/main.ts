@@ -448,3 +448,7 @@ io.on("connection", (socket) => {
 server.listen(PORT, () => {
   console.log(`Server is listening on *:${PORT}`);
 });
+
+app.get("/", () => {
+  console.log("Up and running");
+});
