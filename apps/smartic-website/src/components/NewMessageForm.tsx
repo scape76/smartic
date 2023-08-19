@@ -29,7 +29,7 @@ import { socket } from "@/lib/socket";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { type Input as InferInput } from "valibot";
-import type { Player, Room } from "@gartic/types";
+import type { Player, Room } from "@smartic/types";
 import { useUserStore } from "@/stores/userStore";
 import { messageSchema } from "@/lib/validations/message";
 import { useRoomStore } from "@/stores/roomStore";
