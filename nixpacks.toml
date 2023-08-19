@@ -1,0 +1,5 @@
+[phases.build]
+cmds = ["npx nx build smartic-wss"]
+
+[start]
+cmd = "npm run start:wss"
