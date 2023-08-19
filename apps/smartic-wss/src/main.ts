@@ -34,7 +34,7 @@ import {
 
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server);
 
-const PORT = 3001;
+const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 
 const statusToCountdown: Record<Exclude<RoomStatus, "waiting">, number> = {
   interval: 5,
