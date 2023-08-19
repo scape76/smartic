@@ -24,6 +24,6 @@ app.get('/', (req, res) => {
   res.send({ message: 'Hello API' });
 });
 
-app.listen(port, host, () => {
-  console.log(`[ ready ] http://${host}:${port}`);
+app.listen(port, () => {
+  console.log(`App is listening on port ${port}`);
 });
