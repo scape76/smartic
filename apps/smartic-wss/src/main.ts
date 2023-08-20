@@ -26,7 +26,8 @@ import {
   getRandomColor,
   updateToNextMove,
   getRoomPlayers,
-  getUpdatedRoom,
+  handleUserLeaveRoom,
+  handleUserJoinRoom,
 } from "./lib/utils";
 import {
   statusToCountdown,
@@ -39,7 +40,20 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(server);
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3001;
 
-function startGameloop(roomId: string, status: RoomStatus) {
+export function refreshCanvas(roomId: string) {
+  const room = rooms.get(roomId);
+
+  if (!room) return;
+
+  rooms.set(roomId, {
+    ...room,
+    undoPoints: [],
+  });
+
+  io.to(roomId).emit("clear-canvas");
+}
+
+export function startGameloop(roomId: string, status: RoomStatus) {
   const room = rooms.get(roomId);
 
   console.log("new game loop started");
@@ -47,25 +61,7 @@ function startGameloop(roomId: string, status: RoomStatus) {
   if (!room) return;
 
   if (!room.currentMove) {
-    const updatedRoom = updateToNextMove(roomId);
-
-    if (!updatedRoom) return;
-
-    io.to(roomId).emit("room-status-update", {
-      status: updatedRoom.status,
-      countdown: updatedRoom.countdown,
-      canvasMessage: updatedRoom.canvasMessage,
-      drawingPlayer: updatedRoom.currentMove?.player,
-    });
-
-    io.to(roomId).emit("players-update", {
-      type: "update",
-      players: updatedRoom.players,
-    });
-
-    io.to(updatedRoom.currentMove.player.id).emit("current-move", {
-      currentMove: updatedRoom.currentMove,
-    });
+    updateToNextMove(roomId, io);
   }
 
   const countdownPromise = new Promise<void>((resolve, reject) => {
@@ -105,25 +101,7 @@ function startGameloop(roomId: string, status: RoomStatus) {
             : roomStatus.INTERVAL;
 
         if (nextRoomStatus === roomStatus.INTERVAL) {
-          const updatedRoom = updateToNextMove(roomId);
-
-          if (!updatedRoom) return;
-
-          io.to(updatedRoom.currentMove.player.id).emit("current-move", {
-            currentMove: updatedRoom.currentMove,
-          });
-
-          io.to(roomId).emit("players-update", {
-            type: "update",
-            players: updatedRoom.players,
-          });
-
-          io.to(roomId).emit("room-status-update", {
-            status: updatedRoom.status,
-            canvasMessage: updatedRoom.canvasMessage,
-            countdown: updatedRoom.countdown,
-            drawingPlayer: updatedRoom.currentMove?.player,
-          });
+          updateToNextMove(roomId, io);
         } else {
           const updatedRoom = {
             ...room,
@@ -142,7 +120,7 @@ function startGameloop(roomId: string, status: RoomStatus) {
           });
         }
 
-        io.to(roomId).emit("clear-canvas");
+        refreshCanvas(roomId);
 
         startGameloop(roomId, nextRoomStatus);
       }
@@ -194,82 +172,16 @@ io.on("connection", (socket) => {
 
     const { username, roomId } = validatedData;
 
-    const user = {
-      id: socket.id,
-      username,
-      color: getRandomColor(),
-      isGuessing: true,
-      points: 0,
-    };
-    const updatedRoom = getUpdatedRoom({ roomId, user, type: "joined" });
-
-    // TODO: send a message
-    if (!updatedRoom) return socket.emit("room-not-found");
-
-    socket.join(roomId);
-
-    rooms.set(roomId, {
-      ...updatedRoom,
-    });
-
-    socket.emit("room-joined", { user, roomId, room: updatedRoom });
-    socket.to(roomId).emit("players-update", { player: user, type: "join" });
-    socket.to(roomId).emit("new-message", {
-      type: "join",
-      user,
-      message: `has joined us!`,
-      id: `${user.id}-join`,
-    });
-
-    if (updatedRoom.status === "interval" && !activeGameloops.has(roomId)) {
-      startGameloop(roomId, roomStatus.INTERVAL);
-    }
+    handleUserJoinRoom({ roomId, username, socket });
   });
 
-  socket.on("leave-room", ({ roomId, userId }) => {
+  socket.on("leave-room", ({ roomId }) => {
     // TODO: Parse input
-    const player = getPlayerById(roomId, userId);
+    const player = getPlayerById(roomId, socket.id);
 
     if (!player) return;
 
-    let updatedRoom = getUpdatedRoom({ roomId, userId, type: "leave" });
-
-    if (!updatedRoom) return;
-
-    if (!updatedRoom.players.length) {
-      return rooms.delete(roomId);
-    }
-
-    if (
-      updatedRoom.currentMove?.player?.id === socket.id ||
-      updatedRoom.status === roomStatus.WAITING
-    ) {
-      updatedRoom = {
-        ...updatedRoom,
-        undoPoints: [],
-      };
-      socket.to(roomId).emit("clear-canvas");
-    }
-
-    rooms.set(roomId, updatedRoom);
-
-    socket
-      .to(roomId)
-      .emit("players-update", { playerId: userId, type: "leave" });
-
-    socket.to(roomId).emit("room-status-update", {
-      ...updatedRoom,
-    });
-
-    socket.to(roomId).emit("new-message", {
-      type: "leave",
-      user: {
-        username: player.username,
-        color: player.color,
-      },
-      message: `has left the room!`,
-      id: `${player.id}-leave`,
-    });
+    handleUserLeaveRoom({ roomId, player, socket });
   });
 
   socket.on("client-ready", ({ roomId }) => {
@@ -296,7 +208,9 @@ io.on("connection", (socket) => {
 
   socket.on("draw", ({ drawOptions, roomId }) => {
     const room = rooms.get(roomId);
-    const canDraw = socket.id === room?.currentMove?.player?.id;
+    const canDraw =
+      socket.id === room?.currentMove?.player?.id &&
+      room.status === roomStatus.PLAYING;
     if (!canDraw) return;
     socket.to(roomId).emit("update-canvas-state", { drawOptions });
   });
@@ -360,7 +274,7 @@ io.on("connection", (socket) => {
 
     const id = randomUUID();
 
-    if (text === room.currentMove?.word) {
+    if (text === room.currentMove?.word && room.status === roomStatus.PLAYING) {
       let updatedRoom = {
         ...room,
         players: room.players.map((p) =>
@@ -394,25 +308,9 @@ io.on("connection", (socket) => {
       if (!updatedRoom.players.some((p) => p.isGuessing)) {
         activeGameloops.delete(roomId);
 
-        const updatedRoom = updateToNextMove(roomId);
+        const updatedRoom = updateToNextMove(roomId, io);
 
-        if (!updatedRoom) return;
-
-        io.to(updatedRoom.currentMove.player.id).emit("current-move", {
-          currentMove: updatedRoom.currentMove,
-        });
-
-        io.to(roomId).emit("players-update", {
-          type: "update",
-          players: updatedRoom.players,
-        });
-
-        io.to(roomId).emit("room-status-update", {
-          status: updatedRoom.status,
-          canvasMessage: updatedRoom.canvasMessage,
-          countdown: updatedRoom.countdown,
-          drawingPlayer: updatedRoom.currentMove?.player,
-        });
+        refreshCanvas(roomId);
 
         startGameloop(roomId, updatedRoom.status);
 

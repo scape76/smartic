@@ -166,7 +166,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ roomId }) => {
         className="touch-none rounded border bg-white"
       />
       {room.canvasMessage && (
-        <span className="absolute top-50 left-50 text-background animate-pulse">
+        <span className="absolute top-50 left-50 text-background animate-pulse select-none">
           {room.canvasMessage}
         </span>
       )}
