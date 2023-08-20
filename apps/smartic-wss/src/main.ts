@@ -93,10 +93,7 @@ function startGameloop(roomId: string, status: RoomStatus) {
         status: room.status,
         drawingPlayer: room.currentMove?.player,
         countdown,
-        canvasMessage: getCanvasMessage({
-          status: room.status,
-          drawingPlayerUsername: room.currentMove!.player.username,
-        }),
+        canvasMessage: room.canvasMessage,
       });
 
       countdown++;

@@ -18,12 +18,17 @@ export function getPlayerById(roomId: string, playerId: string) {
 
 export function getCanvasMessage(
   payload:
-    | { status: (typeof roomStatus)["INTERVAL"]; drawingPlayerUsername: string }
+    | ({ status: (typeof roomStatus)["INTERVAL"] } & {
+      drawingPlayerUsername: string;
+      previousWord?: string;
+      })
     | { status: (typeof roomStatus)["WAITING" | "PLAYING"] }
 ) {
   switch (payload.status) {
     case "interval":
-      return `${payload.drawingPlayerUsername} is about to draw now!`;
+      return `${payload.previousWord ? `It was ${payload.previousWord}.` : ""}\n${
+        payload.drawingPlayerUsername
+      } is about to draw now!`;
     case "waiting":
       return "Waiting for players...";
     default:
@@ -135,6 +140,7 @@ export function updateToNextMove(roomId: string) {
   const canvasMessage = getCanvasMessage({
     status: roomStatus.INTERVAL,
     drawingPlayerUsername: nextMove.player.username,
+    previousWord: room.currentMove?.word,
   });
 
   let updatedRoom = {
