@@ -22,59 +22,27 @@ import { roomStatus } from "./types";
 import { activeGameloops, rooms } from "./data/store";
 import {
   getCanvasMessage,
-  getNextMove,
   getPlayerById,
   getRandomColor,
-  getRandomWord,
+  updateToNextMove,
   getRoomPlayers,
   getUpdatedRoom,
 } from "./lib/utils";
+import {
+  statusToCountdown,
+  POINTS_FOR_GUESS,
+  POINTS_FOR_GUESS_TO_PAINTER,
+  START_GAME_PLAYERS_AMOUNT,
+} from "./config";
 
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server);
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3001;
 
-const statusToCountdown: Record<Exclude<RoomStatus, "waiting">, number> = {
-  interval: 5,
-  playing: 15,
-};
-
-const POINTS_FOR_GUESS = 5;
-const POINTS_FOR_GUESS_TO_PAINTER = 2;
-
-function updateToNextMove(roomId: string) {
-  const room = rooms.get(roomId);
-
-  if (!room) return;
-
-  const nextMove = getNextMove(roomId);
-
-  if (!nextMove) return;
-
-  const canvasMessage = getCanvasMessage({
-    status: roomStatus.INTERVAL,
-    drawingPlayerUsername: nextMove.player.username,
-  });
-
-  let updatedRoom = {
-    ...room,
-    status: roomStatus.INTERVAL,
-    currentMove: nextMove,
-    canvasMessage,
-    players: room.players.map((p) =>
-      p.id === nextMove.player.id
-        ? { ...p, isGuessing: false }
-        : { ...p, isGuessing: true }
-    ),
-  };
-
-  rooms.set(roomId, updatedRoom);
-
-  return updatedRoom;
-}
-
 function startGameloop(roomId: string, status: RoomStatus) {
   const room = rooms.get(roomId);
+
+  console.log("new game loop started");
 
   if (!room) return;
 
@@ -426,6 +394,34 @@ io.on("connection", (socket) => {
         id,
       });
 
+      if (!updatedRoom.players.some((p) => p.isGuessing)) {
+        activeGameloops.delete(roomId);
+
+        const updatedRoom = updateToNextMove(roomId);
+
+        if (!updatedRoom) return;
+
+        io.to(updatedRoom.currentMove.player.id).emit("current-move", {
+          currentMove: updatedRoom.currentMove,
+        });
+
+        io.to(roomId).emit("players-update", {
+          type: "update",
+          players: updatedRoom.players,
+        });
+
+        io.to(roomId).emit("room-status-update", {
+          status: updatedRoom.status,
+          canvasMessage: updatedRoom.canvasMessage,
+          countdown: updatedRoom.countdown,
+          drawingPlayer: updatedRoom.currentMove?.player,
+        });
+
+        startGameloop(roomId, updatedRoom.status);
+
+        return;
+      }
+
       io.to(roomId).emit("players-update", {
         type: "update",
         players: updatedRoom.players,
@@ -448,6 +444,6 @@ server.listen(PORT, () => {
 });
 
 app.get("/", (req, res) => {
-  res.send({ message: 'Hello API' });
+  res.send({ message: "Hello API" });
   console.log("Up and running");
 });

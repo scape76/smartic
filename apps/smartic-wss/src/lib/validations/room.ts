@@ -1,7 +1,14 @@
 import { Socket } from "socket.io";
 import { CreateRoomData, JoinRoomData } from "../../types";
-import { object, string, custom, minLength, maxLength, safeParse } from "valibot";
-
+import {
+  object,
+  string,
+  custom,
+  minLength,
+  maxLength,
+  safeParse,
+  enumType,
+} from "valibot";
 
 export const joinRoomSchema = object({
   username: string([
@@ -24,10 +31,13 @@ export const createRoomSchema = object({
     minLength(3, "Username must be at least 4 characters."),
     maxLength(31, "Username must not contain more than 31 characters"),
   ]),
-  language: string()
-})
+  language: enumType(["english"]),
+});
 
-export function validateJoinRoomData(socket: Socket, joinRoomData: JoinRoomData) {
+export function validateJoinRoomData(
+  socket: Socket,
+  joinRoomData: JoinRoomData
+) {
   const result = safeParse(joinRoomSchema, joinRoomData);
   if (result.success) {
     return result.data;

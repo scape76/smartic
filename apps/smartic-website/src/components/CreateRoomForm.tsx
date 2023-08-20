@@ -31,6 +31,8 @@ import { useRouter } from "next/navigation";
 import { type Input as InferInput } from "valibot";
 import { useUserStore } from "@/stores/userStore";
 import { useRoomStore } from "@/stores/roomStore";
+import randomstring from "randomstring";
+import { getRandomPlayerNumber } from "@/lib/utils";
 
 type Inputs = InferInput<typeof playerSchema>;
 
@@ -42,10 +44,12 @@ export function CreateRoomForm() {
   const setUser = useUserStore((state) => state.setUser);
   const setRoom = useRoomStore((state) => state.setRoom);
 
+  const randomPlayerNumber = getRandomPlayerNumber();
+
   const form = useForm<Inputs>({
     resolver: valibotResolver(playerSchema),
     defaultValues: {
-      username: "Player2231",
+      username: `Player${randomPlayerNumber}`,
       language: "english",
     },
   });
@@ -82,7 +86,7 @@ export function CreateRoomForm() {
               <FormItem>
                 <FormLabel>Username</FormLabel>
                 <FormControl>
-                  <Input placeholder="Player1993" {...field} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

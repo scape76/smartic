@@ -15,7 +15,10 @@
         "bundle": false,
         "main": "apps/smartic-wss/src/main.ts",
         "tsConfig": "apps/smartic-wss/tsconfig.app.json",
-        "assets": ["apps/smartic-wss/src/assets"],
+        "assets": [
+          "apps/smartic-wss/src/assets",
+          { "input": "apps/smartic-wss", "glob": "words.json", "output": "./apps/smartic-wss" }
+        ],
         "generatePackageJson": true,
         "esbuildOptions": {
           "sourcemap": true,

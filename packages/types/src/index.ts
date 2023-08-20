@@ -14,11 +14,17 @@ const roomStatus = {
 
 export type RoomStatus = (typeof roomStatus)[keyof typeof roomStatus];
 
+const language = {
+  english: "English"
+} as const;
+
+export type Language = keyof typeof language; 
+
 export interface Room {
   players: Player[];
   // playerId - word
   currentMove?: { player: Player; word: string };
-  language: string;
+  language: Language;
   undoPoints: string[];
   status: RoomStatus;
   canvasMessage?: string;

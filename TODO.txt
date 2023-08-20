@@ -1,0 +1,3 @@
+- If everyone in the room guessed right, stop the 
+countdown and pass the move
+- If someone didnt guess it, show the right answer

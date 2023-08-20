@@ -33,6 +33,7 @@ import type { Player, Room } from "@smartic/types";
 import { useUserStore } from "@/stores/userStore";
 import { joinRoomSchema } from "@/lib/validations/room";
 import { useRoomStore } from "@/stores/roomStore";
+import { getRandomPlayerNumber } from "@/lib/utils";
 
 type Inputs = InferInput<typeof joinRoomSchema>;
 
@@ -42,12 +43,14 @@ export function JoinRoomForm() {
   const router = useRouter();
 
   const setUser = useUserStore((state) => state.setUser);
-  const setRoom = useRoomStore((state) => state.setRoom)
+  const setRoom = useRoomStore((state) => state.setRoom);
+
+  const randomPlayerNumber = getRandomPlayerNumber();
 
   const form = useForm<Inputs>({
     resolver: valibotResolver(joinRoomSchema),
     defaultValues: {
-      username: "Player2231",
+      username: `Player${randomPlayerNumber}`,
       roomId: "",
     },
   });
@@ -61,19 +64,12 @@ export function JoinRoomForm() {
   }
 
   useEffect(() => {
-    socket.once(
-      "room-joined",
-      ({
-        user,
-        roomId,
-        room,
-      }) => {
-        setUser(user);
-        setRoom(room);
+    socket.once("room-joined", ({ user, roomId, room }) => {
+      setUser(user);
+      setRoom(room);
 
-        router.push(`/${roomId}`);
-      }
-    );
+      router.push(`/${roomId}`);
+    });
   }, []);
 
   return (
@@ -86,7 +82,7 @@ export function JoinRoomForm() {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="Player1993" {...field} />
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

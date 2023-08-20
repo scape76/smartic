@@ -1,11 +1,8 @@
 import { Player, Room } from "@smartic/types";
 import { roomStatus } from "../types";
-import {
-  rooms,
-  activeGameloops,
-  START_GAME_PLAYERS_AMOUNT,
-} from "../data/store";
-import { words } from "../data/store";
+import { rooms, activeGameloops } from "../data/store";
+import { START_GAME_PLAYERS_AMOUNT } from "../config";
+import * as words from "../../words.json";
 
 export function getRoomPlayers(roomId: string) {
   const room = rooms.get(roomId);
@@ -43,8 +40,8 @@ export function getRandomColor() {
   return color;
 }
 
-export function getRandomWord() {
-  return words[Math.floor(Math.random() * words.length)];
+export function getRandomWord(language: keyof typeof words) {
+  return words[language][Math.floor(Math.random() * words[language].length)];
 }
 
 export function getNextMove(roomId: string): Room["currentMove"] {
@@ -55,7 +52,7 @@ export function getNextMove(roomId: string): Room["currentMove"] {
     return;
   }
 
-  const newWord = getRandomWord();
+  const newWord = getRandomWord(room.language);
 
   const currentDrawingPlayerIndex = room.players.findIndex(
     (p) => p.id === room.currentMove?.player.id
@@ -122,6 +119,37 @@ export function getUpdatedRoom(
       canvasMessage: getCanvasMessage({ status: roomStatus.WAITING }),
     };
   }
+
+  return updatedRoom;
+}
+
+export function updateToNextMove(roomId: string) {
+  const room = rooms.get(roomId);
+
+  if (!room) return;
+
+  const nextMove = getNextMove(roomId);
+
+  if (!nextMove) return;
+
+  const canvasMessage = getCanvasMessage({
+    status: roomStatus.INTERVAL,
+    drawingPlayerUsername: nextMove.player.username,
+  });
+
+  let updatedRoom = {
+    ...room,
+    status: roomStatus.INTERVAL,
+    currentMove: nextMove,
+    canvasMessage,
+    players: room.players.map((p) =>
+      p.id === nextMove.player.id
+        ? { ...p, isGuessing: false }
+        : { ...p, isGuessing: true }
+    ),
+  };
+
+  rooms.set(roomId, updatedRoom);
 
   return updatedRoom;
 }

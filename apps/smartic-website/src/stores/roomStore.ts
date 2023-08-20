@@ -44,13 +44,13 @@ export const useRoomStore = create<RoomState>((set) => ({
       drawingPlayer,
     })),
   resetRoom: () =>
-    set((state) => ({
+    set({
       language: "english",
       status: "waiting",
       canvasMessage: "",
       countdown: 0,
       players: [],
       drawingPlayer: undefined,
-    })),
-  setCurrentMove: (currentMove) => set((state) => ({ currentMove })),
+    }),
+  setCurrentMove: (currentMove) => set({ currentMove }),
 }));

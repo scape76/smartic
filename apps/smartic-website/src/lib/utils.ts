@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import randomstring from "randomstring";
 
 import { RoomStatus, DrawOptions } from "@smartic/types";
 
@@ -83,4 +84,11 @@ export function isElementInViewport(element?: HTMLElement | null) {
       (window.innerHeight || document.documentElement.clientHeight) &&
     rect.right <= (window.innerWidth || document.documentElement.clientWidth)
   );
+}
+
+export function getRandomPlayerNumber () {
+  return randomstring.generate({
+    length: 4,
+    charset: "numeric",
+  });
 }

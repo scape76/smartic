@@ -17,3 +17,4 @@ export const useCanvasStore = create<CanvasState>(set => ({
   setStrokeWidth: strokeWidth => set({ strokeWidth }),
   setDashGap: dashGap => set({ dashGap }),
 }))
+

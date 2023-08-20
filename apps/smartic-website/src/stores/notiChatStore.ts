@@ -11,5 +11,5 @@ export const useNotiChatStore = create<NotiChatState>((set) => ({
   notifications: [],
   addNotification: (noti) =>
     set((state) => ({ notifications: [...state.notifications, noti] })),
-  clearNotifications: () => set((_) => ({ notifications: [] })),
+  clearNotifications: () => set({ notifications: [] }),
 }));
