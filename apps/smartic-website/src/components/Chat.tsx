@@ -41,14 +41,13 @@ export function Chat({ roomId }: { roomId: string }) {
   React.useEffect(() => {
     if (!scrollAreaRef.current || !lastMessageRef.current) return;
 
-    const diff =
-      scrollAreaRef.current?.clientHeight -
-      lastMessageRef.current?.clientHeight;
-
     const callbackListener = () => {
+      if (!scrollAreaRef.current || !lastMessageRef.current) return;
+
       if (
-        scrollAreaRef.current?.scrollTop ===
-        Number(lastMessageRef.current?.offsetTop) - diff
+        scrollAreaRef.current?.scrollTop >=
+        scrollAreaRef.current?.scrollHeight -
+          scrollAreaRef.current?.clientHeight
       ) {
         setSawNewMessages(true);
         setMovedCursor(false);
@@ -58,14 +57,14 @@ export function Chat({ roomId }: { roomId: string }) {
       setMovedCursor(true);
     };
 
-    scrollAreaRef.current.addEventListener("scrollend", callbackListener);
+    scrollAreaRef.current.addEventListener("scroll", callbackListener);
 
     return () => {
-      scrollAreaRef.current?.removeEventListener("scrollend", callbackListener);
+      scrollAreaRef.current?.removeEventListener("scroll", callbackListener);
     };
   }, [scrollAreaRef, messages]);
 
-  console.log(movedCursor, sawNewMessages);
+  // console.log(movedCursor, sawNewMessages);
 
   return (
     <Card className="w-full md:w-[270px]  mt-4 mx-6 p-4 border-border border ">
