@@ -24,6 +24,7 @@ export const useRoomStore = create<RoomState>((set) => ({
   language: "english",
   status: "waiting",
   canvasMessage: "",
+  pointsThreshold: 0,
   countdown: 0,
   players: [],
   currentMove: undefined,
