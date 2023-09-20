@@ -5,8 +5,14 @@ interface SendCanvasStatePayload {
   roomId: string;
 }
 
+interface CreateRoomData {
+  username: string;
+  language: string;
+  pointsThreshold: number;
+}
+
 export interface ClientToServerEvents {
-  "create-room": (payload: { username: string; language: string }) => void;
+  "create-room": (payload: CreateRoomData) => void;
   "join-room": (payload: { username: string; roomId: string }) => void;
   "leave-room": (payload: { roomId: string; userId: string }) => void;
   "client-ready": (payload: { roomId: string }) => void;

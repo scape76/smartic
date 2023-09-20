@@ -1,3 +1,6 @@
+export * from "./events/server-to-client";
+export * from "./events/client-to-server";
+
 export interface Player {
   username: string;
   color: string;
@@ -15,20 +18,20 @@ const roomStatus = {
 export type RoomStatus = (typeof roomStatus)[keyof typeof roomStatus];
 
 const language = {
-  english: "English"
+  english: "English",
 } as const;
 
-export type Language = keyof typeof language; 
+export type Language = keyof typeof language;
 
 export interface Room {
   players: Player[];
-  // playerId - word
   currentMove?: { player: Player; word: string };
   language: Language;
   undoPoints: string[];
   status: RoomStatus;
   canvasMessage?: string;
   countdown?: number;
+  pointsThreshold: number;
 }
 
 export type RoomFrontend = Omit<Room, "undoPoints"> & {
@@ -56,14 +59,14 @@ export type ChatMessage = (
 ) & { id: string };
 
 export interface Point {
-  x: number
-  y: number
+  x: number;
+  y: number;
 }
 
 export interface DrawProps {
-  ctx: CanvasRenderingContext2D
-  currentPoint: Point
-  prevPoint: Point | undefined
+  ctx: CanvasRenderingContext2D;
+  currentPoint: Point;
+  prevPoint: Point | undefined;
 }
 
 export interface DrawOptions extends DrawProps {
@@ -71,33 +74,6 @@ export interface DrawOptions extends DrawProps {
   strokeWidth: number[];
   dashGap: number[];
 }
-
-
-interface SendCanvasStatePayload {
-  canvasState: string;
-  roomId: string;
-}
-
-export interface ClientToServerEvents {
-  "create-room": (payload: { username: string; language: string }) => void;
-  "join-room": (payload: { username: string; roomId: string }) => void;
-  "leave-room": (payload: { roomId: string; userId: string }) => void;
-  "client-ready": (payload: { roomId: string }) => void;
-  "send-canvas-state": (payload: SendCanvasStatePayload) => void;
-  draw: (payload: { drawOptions: DrawOptions; roomId: string }) => void;
-  undo: (payload: SendCanvasStatePayload) => void;
-  "delete-last-undo-point": (payload: { roomId: string }) => void;
-  "get-last-undo-point": (payload: { roomId: string }) => void;
-  "add-undo-point": (payload: { roomId: string; undoPoint: string }) => void;
-  "clear-canvas": (payload: { roomId: string }) => void;
-  "send-message": (payload: { text: string; roomId: string }) => void;
-}
-
-type RoomCreatedPayload = {
-  user: Player;
-  roomId: string;
-  room: Room;
-};
 
 export type RoomStatusUpdatePayload = {
   status: RoomStatus;
@@ -117,23 +93,3 @@ export type PlayersUpdatePayload =
   | { type: "update"; players: Player[] };
 
 export type CurrentMove = Room["currentMove"];
-
-export interface ServerToClientEvents {
-  "room-created": (payload: RoomCreatedPayload) => void;
-  "players-update": (
-    payload:
-    PlayersUpdatePayload
-  ) => void;
-  "room-joined": (payload: RoomCreatedPayload) => void;
-  "room-not-found": () => void;
-  "client-loaded": () => void;
-  "get-canvas-state": () => void;
-  "canvas-state-from-server": (payload: { canvasState: string }) => void;
-  "update-canvas-state": (payload: { drawOptions: DrawOptions }) => void;
-  "last-undo-point-from-server": (payload: { lastUndoPoint?: string }) => void;
-  "undo-canvas": (payload: { canvasState: string }) => void;
-  "clear-canvas": () => void;
-  "new-message": (payload: NewMessagePayload) => void;
-  "room-status-update": (payload: RoomStatusUpdatePayload) => void;
-  "current-move": (payload: { currentMove: CurrentMove }) => void;
-}

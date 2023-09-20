@@ -4,8 +4,8 @@ export const statusToCountdown: Record<
   Exclude<RoomStatus, "waiting">,
   number
 > = {
-  interval: 5,
-  playing: 15,
+  interval: 8,
+  playing: 60,
 };
 
 export const START_GAME_PLAYERS_AMOUNT = 2;

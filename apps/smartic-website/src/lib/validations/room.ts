@@ -1,13 +1,24 @@
-import { object, string, minLength, maxLength, custom } from "valibot";
+import {
+  object,
+  string,
+  minLength,
+  maxLength,
+  custom,
+  enumType,
+  number,
+  minValue,
+  maxValue,
+  coerce,
+} from "valibot";
 
 export const createRoomSchema = object({
   username: string([
     minLength(3, "Username must be at least 4 characters."),
     maxLength(31, "Username must not contain more than 31 characters"),
   ]),
-  language: string(),
+  language: enumType(["english"]),
+  pointsThreshold: coerce(number(), (val) => Number(val)),
 });
-
 
 export const joinRoomSchema = object({
   username: string([
@@ -24,4 +35,3 @@ export const joinRoomSchema = object({
     ),
   ]),
 });
-

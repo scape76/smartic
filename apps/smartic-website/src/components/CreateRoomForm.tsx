@@ -23,18 +23,18 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { playerSchema } from "@/lib/validations/player";
 import { Button } from "@/components/ui/button";
 import { socket } from "@/lib/socket";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { type Input as InferInput } from "valibot";
 import { useUserStore } from "@/stores/userStore";
+import { createRoomSchema } from "@/lib/validations/room";
 import { useRoomStore } from "@/stores/roomStore";
 import randomstring from "randomstring";
 import { getRandomPlayerNumber } from "@/lib/utils";
 
-type Inputs = InferInput<typeof playerSchema>;
+type Inputs = InferInput<typeof createRoomSchema>;
 
 export function CreateRoomForm() {
   const [isLoading, setIsLoading] = React.useState(false);
@@ -47,10 +47,11 @@ export function CreateRoomForm() {
   const randomPlayerNumber = getRandomPlayerNumber();
 
   const form = useForm<Inputs>({
-    resolver: valibotResolver(playerSchema),
+    resolver: valibotResolver(createRoomSchema),
     defaultValues: {
       username: `Player${randomPlayerNumber}`,
       language: "english",
+
     },
   });
 
@@ -111,6 +112,26 @@ export function CreateRoomForm() {
                     <SelectItem value="english">English</SelectItem>
                   </SelectContent>
                 </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="pointsThreshold"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Points threshold</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    {...field}
+                    onChange={(e) => {
+                      if (!/^\d+$/.test(e.target.value) && e.target.value) return;
+                      field.onChange(e);
+                    }}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

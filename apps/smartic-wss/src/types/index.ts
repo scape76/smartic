@@ -6,6 +6,7 @@ export interface JoinRoomData {
 export interface CreateRoomData {
   username: string;
   language: string;
+  pointsThreshold: number;
 }
 
 export const roomStatus = {

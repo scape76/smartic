@@ -8,6 +8,9 @@ import {
   maxLength,
   safeParse,
   enumType,
+  minValue,
+  maxValue,
+  number,
 } from "valibot";
 
 export const joinRoomSchema = object({
@@ -32,6 +35,7 @@ export const createRoomSchema = object({
     maxLength(31, "Username must not contain more than 31 characters"),
   ]),
   language: enumType(["english"]),
+  pointsThreshold: number([minValue(10), maxValue(240)]),
 });
 
 export function validateJoinRoomData(

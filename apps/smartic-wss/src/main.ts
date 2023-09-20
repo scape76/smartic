@@ -13,10 +13,10 @@ import {
   validateJoinRoomData,
 } from "./lib/validations/room";
 import type {
-  ClientToServerEvents,
-  ServerToClientEvents,
   Room,
   RoomStatus,
+  ClientToServerEvents,
+  ServerToClientEvents,
 } from "@smartic/types";
 import { roomStatus } from "./types";
 import { activeGameloops, rooms } from "./data/store";
@@ -156,6 +156,7 @@ io.on("connection", (socket) => {
       undoPoints: [],
       status: roomStatus.WAITING,
       canvasMessage: getCanvasMessage({ status: roomStatus.WAITING }),
+      pointsThreshold: data.pointsThreshold,
     };
 
     rooms.set(roomId, room);
@@ -274,7 +275,10 @@ io.on("connection", (socket) => {
 
     const id = randomUUID();
 
-    if (text === room.currentMove?.word && room.status === roomStatus.PLAYING) {
+    const guessedRight =
+      text === room.currentMove?.word && room.status === roomStatus.PLAYING;
+
+    if (guessedRight) {
       let updatedRoom = {
         ...room,
         players: room.players.map((p) =>
@@ -305,17 +309,18 @@ io.on("connection", (socket) => {
         id,
       });
 
-      if (!updatedRoom.players.some((p) => p.isGuessing)) {
-        activeGameloops.delete(roomId);
+      if (updatedRoom.players.some((p) => p.points >= room.pointsThreshold))
+        if (!updatedRoom.players.some((p) => p.isGuessing)) {
+          activeGameloops.delete(roomId);
 
-        const updatedRoom = updateToNextMove(roomId, io);
+          const updatedRoom = updateToNextMove(roomId, io);
 
-        refreshCanvas(roomId);
+          refreshCanvas(roomId);
 
-        startGameloop(roomId, updatedRoom.status);
+          startGameloop(roomId, updatedRoom.status);
 
-        return;
-      }
+          return;
+        }
 
       io.to(roomId).emit("players-update", {
         type: "update",
